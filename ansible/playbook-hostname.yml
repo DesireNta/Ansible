@@ -1,0 +1,13 @@
+---
+# Modification de hostname
+
+- name: modifier le port 80 en 8080
+  hosts: all
+  gather_facts: false
+
+  tasks: 
+    - name: changement de port 
+      hostname:
+        name: '{{inventory_hostname}}'
+   
+
