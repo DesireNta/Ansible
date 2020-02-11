@@ -11,11 +11,14 @@
     - name: change line in httpd.conf
       lineinfile:
         path: /etc/httpd/conf/httpd.conf
-        regexp: ^Listen 80$ 
-        line: Listen 8080
-  
+        regexp: ^Listen 8080$ 
+        line: Listen 80
+      notify: restart_httpd
+
+  handlers:
     - name: demarrer le service httpd
       service: 
         name: httpd
         state: restarted
+      listen: restart_httpd
 
