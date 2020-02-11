@@ -1,0 +1,17 @@
+---
+# playbook n°3 : Modification de port 
+
+- name: modifier le port 80 en 8080
+  hosts: centos
+  gather_facts: false
+  remote_user: vagrant
+  become: yes
+
+  vars:
+    var1: TEST
+
+  tasks: 
+    - name: TEST vars
+      debug:
+        msg: 'TEST DE : {{ var1 }}'
+
