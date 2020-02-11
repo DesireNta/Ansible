@@ -1,0 +1,51 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+
+Vagrant.configure("2") do |config|
+
+  config.vm.define "node-1" do |front|
+    front.vm.box = "centos/7"
+    front.vm.hostname = "node-1"
+    front.vm.network "public_network", bridge: "eno1"
+    front.vm.provider "virtualbox" do |frt|
+      frt.name = "node-1"
+      frt.memory = "1024"
+      frt.cpus = 1
+    end
+  end
+
+  config.vm.define "node-2" do |bdd|
+    bdd.vm.box = "centos/7"
+    bdd.vm.hostname = "node-2"
+    bdd.vm.network "public_network", bridge: "eno1"
+    bdd.vm.provider "virtualbox" do |bd|
+      bd.name = "node-2"
+      bd.memory = "1024"
+      bd.cpus = 1
+    end
+  end
+
+  config.vm.define "node-3" do |mng|
+    mng.vm.box = "generic/debian9"
+    mng.vm.hostname = "node-3"
+    mng.vm.network "public_network", bridge: "eno1"
+    mng.vm.provider "virtualbox" do |m|
+      m.name = "node-3"
+      m.memory = "1024"
+      m.cpus = 1
+    end
+  end
+
+   config.vm.define "node-4" do |mng|
+    mng.vm.box = "generic/debian9"
+    mng.vm.hostname = "node-4"
+    mng.vm.network "public_network", bridge: "eno1"
+    mng.vm.provider "virtualbox" do |m|
+      m.name = "node-4"
+      m.memory = "1024"
+      m.cpus = 1
+    end
+  end
+
+end

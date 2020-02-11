@@ -1,0 +1,19 @@
+---
+# playbook n°1 : ping vers tous les cibles
+
+- name: Modification d'un fichier dans la machine 
+  hosts: centos
+  gather_facts: false
+  remote_user: vagrant
+  become: true
+
+  tasks: 
+    - name: module lineinfile
+      lineinfile:
+        path: /etc/hosts
+        line: 192.168.59.23 ansible 
+     
+    - name: ajouter une ligne dans html
+      lineinfile: 
+        path: /var/www/html/index.html
+        line: AJOUT D'UNE AUTRE LIGNE 

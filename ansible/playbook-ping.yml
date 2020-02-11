@@ -1,0 +1,13 @@
+---
+# playbook n°1 : ping vers tous les cibles
+
+- name: Premier acte -> ping vers all
+  hosts: all
+  gather_facts: false
+  remote_user: vagrant
+  become: yes
+
+  tasks: 
+    - name: n'importe quoi
+      ping: 
+

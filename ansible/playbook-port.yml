@@ -1,0 +1,21 @@
+---
+# playbook n°3 : Modification de port 
+
+- name: modifier le port 80 en 8080
+  hosts: centos
+  gather_facts: false
+  remote_user: vagrant
+  become: yes
+
+  tasks: 
+    - name: change line in httpd.conf
+      lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: ^Listen 80$ 
+        line: Listen 8080
+  
+    - name: demarrer le service httpd
+      service: 
+        name: httpd
+        state: restarted
+

@@ -1,0 +1,26 @@
+---
+# playbook n°2 : installation de httpd sur les centos
+
+- name: installation de httpd
+  hosts: centos
+  gather_facts: false
+  remote_user: vagrant
+  become: yes
+
+  tasks: 
+    - name: installer httpd
+      yum: 
+        name: httpd
+        state: present
+  
+    - name: demarrer le service httpd
+      service: 
+        name: httpd
+        state: started
+        enabled: true
+   
+    - name: copier le fichier html dans les nodes
+      copy:
+        src: index.html
+        dest: /var/www/html/index.html 
+

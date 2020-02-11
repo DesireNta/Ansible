@@ -1,0 +1,7 @@
+[centos]
+node-1   ansible_host=192.168.59.96   #ansible_user=vagrant
+node-2   ansible_host=192.168.59.140   #ansible_user=vagrant 
+
+[debian]
+node-3   ansible_host=192.168.59.134  #ansible_user=vagrant
+node-4   ansible_host=192.168.59.63   #ansible_user=vagrant
