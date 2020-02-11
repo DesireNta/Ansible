@@ -1,8 +1,8 @@
 ---
-# playbook n°3 : Modification de port 
+# playbook n°5 : Modification de port 
 
 - name: modifier le port 80 en 8080
-  hosts: centos
+  hosts: all
   gather_facts: false
   remote_user: vagrant
   become: yes
@@ -10,15 +10,15 @@
   tasks: 
     - name: changement de port 
       lineinfile:
-        path: '{{httpd_conf}}'
+        path: '{{path_conf_port}}'
         regexp: ^Listen 80$ 
         line: Listen 8080
-      notify: restart_httpd
+      notify: restart_services
 
   handlers:
     - name: demarrer le service httpd
       service: 
-        name: '{{service_name}}'
+        name: '{{service}}'
         state: restarted
-      listen: restart_httpd
+      listen: restart_services
 

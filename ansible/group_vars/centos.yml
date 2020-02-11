@@ -1,2 +1,6 @@
-service_name: httpd
-httpd_conf: /etc/httpd/conf/httpd.conf
+service: httpd
+paquet: httpd
+path_conf_port: /etc/httpd/conf/httpd.conf
+commande: yum
+module: package
+repertoire: /var/www/html/index.html
