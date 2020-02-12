@@ -20,7 +20,7 @@
         enabled: true
    
     - name: copier le fichier html dans les nodes
-      copy:
+      template:
         src: index.html
         dest: '{{repertoire}}' 
 

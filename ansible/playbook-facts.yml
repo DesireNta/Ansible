@@ -1,0 +1,14 @@
+---
+#
+#Les faits 
+# 
+# 2020-02-12
+#
+
+- name: Facts
+  hosts: centos-1
+ 
+  tasks:
+    - name: Affiche de l'adresse ipva
+      debug:
+        msg: '{{ansible_all_ipv4_addresses}}'

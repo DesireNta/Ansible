@@ -1,0 +1,22 @@
+---
+
+- name: Change HTML
+  hosts: all 
+
+  tasks: 
+   - name: Module copy with customezed content
+     copy:
+       content: |
+                <!DOCTYPE html>
+                <html>
+                   <head>
+                      <title>{{inventory_hostname}}</title>
+                      <meta charset="utf-8">
+                   </head>
+                   <body>
+                    Python sur le node {{inventory_hostname}} : <br>
+                    Exécutable : {{ansible_python.executable}}  <br>
+                    Version : {{ansible_python.version.major}}.{{ansible_python.version.minor}}.{{ansible_python.version.micro}}
+                   </body>
+                </html>
+       dest: '{{repertoire}}'

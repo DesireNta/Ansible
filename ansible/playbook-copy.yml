@@ -1,0 +1,12 @@
+---
+
+- name: Module copy
+  hosts: all 
+
+  tasks: 
+   - name: Module copy
+     copy:
+       content: |
+                Test du paramètre du contenu
+                Ligne2
+       dest: /tmp/la_copy.txt

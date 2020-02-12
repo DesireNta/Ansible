@@ -1,0 +1,21 @@
+---
+# playbook n°1 : ping vers tous les cibles
+
+- name: Modification d'un fichier dans la machine 
+  hosts: all
+
+  tasks: 
+    - name: module lineinfile
+      connection: local
+      become : yes
+      lineinfile:
+        path: /tmp/hosts.txt
+        line: "{{ansible_host}}    {{inventory_hostname}}"
+        create: yes
+
+    - name: blabla
+      lineinfile:
+        dest : /etc/hosts
+        line : "{{lookup('file','/tmp/hosts.txt') }}"
+        insertafter: EOF	
+        backup: yes
