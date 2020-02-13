@@ -1,0 +1,40 @@
+#
+#Structure loop
+#
+# 2020-02-12
+#
+
+- name : structure loop
+  hosts: centos-1 
+  gather_facts: no
+ 
+  vars: 
+    stagiaires:
+     - david
+     - tonio
+     - rom 
+
+  tasks:
+  - name: Première boucle simple 
+    debug: 
+      msg: '{{ item}}'
+    loop: 
+      - bob
+      - curt
+      - loé
+
+  - name: Boucle à partir d'une variable
+    debug:
+      msg: '{{ item }}'
+    loop: '{{ stagiaires }}'
+
+  
+  - name: Boucle selon une séquence 
+    debug: 
+      msg: '{{ item }}'
+    loop : '{{ range(0,10,2)|list}}'
+
+  - name: Itération sur les lignes d'un fichier (fichier_a_iterer.txt)
+    debug:
+      msg: '{{ item }}'
+    loop : '{{ lookup("file","fichier_a_iterer.txt").splitlines()}}'

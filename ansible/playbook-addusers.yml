@@ -1,0 +1,49 @@
+#
+# Creating users and groups in vars 
+# 2020-02-12
+#
+#
+
+- name: Creation des groups et users
+  hosts: all
+  
+
+  vars: 
+   users: 
+    - login: bob 
+      shell: /bin/bash 
+      groups: 
+        - admin 
+        - info 
+      password: secret 
+      
+    - login: curt 
+      shell: /bin/bash 
+      groups: 
+        - admin 
+        - sport
+      password: secret 
+
+
+  tasks: 
+  
+  - name : Creating groups 
+    group:
+      name: '{{item.1}}'
+      state: present
+    loop: '{{ users | subelements("groups")}}'
+
+#  - name : Afficher 
+#    debug:
+#      msg : '{{item.1}}'
+#    loop : '{{users | subelements("groups")}}'
+#    check_mode: yes
+
+  - name : Add users bob and curt
+    user: 
+      name: '{{item.login}}'
+      shell: '{{item.shell}}'
+      groups : '{{item.groups}}'
+      password : '{{item.password | password_hash("sha512")}}'
+      state: present
+    loop : '{{users}}'

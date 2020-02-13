@@ -1,0 +1,16 @@
+---
+ - name : Module assert 
+   hosts: all
+
+   tasks:
+
+   - name: Vérification de la distribution CentOs/RedHat et de m'architecture x86_64
+     fail:
+       msg: Distribution/architecture non supportée 
+     when: 
+         - ansible_distribution in ['CentOS','RedHat']
+         - ansible_architecture == 'x86_64'
+
+   - name: Tache  de Vérification de la réussite du module assert
+     debug: 
+       msg: "Glop glop !"

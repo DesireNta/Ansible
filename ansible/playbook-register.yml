@@ -1,0 +1,15 @@
+---
+
+- name: Module register
+  hosts: centos-1
+
+  tasks: 
+    - name: Sauvagerde le resultat 
+      ping:
+      register: resultat
+
+
+    - name: Afficher le resultat
+      debug:
+        msg: "Variable resultat : {{resultat}}"
+  

@@ -1,0 +1,22 @@
+#
+#
+# Structure when
+#
+# 2020-20-12
+#
+
+- name: Structure when
+  hosts: all
+  
+  tasks:
+  - name: Meta-tache du block when 
+    block: 
+     - name: Lister les hotes lorque la distribution est une Debian
+       debug:
+         msg: "{{inventory_hostname}} ({{ ansible_distribution}})"
+       register: log
+
+     - name: Afficher le status de la tache précédente
+       debug:
+        msg: '{{ log.failed }}'
+    when: ansible_distribution in ['Debian']

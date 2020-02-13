@@ -1,0 +1,23 @@
+# Check if user bob exists in the nodes 
+#
+# @autor : NDCY desire 
+#
+#
+
+---
+ - name : Check for bob in users 
+   hosts: all
+   gather_facts: no
+
+
+
+   tasks:
+   - name: Vérifier la presence du compte 'bob'
+     shell: grep -q ^bob /etc/passwd && echo ok || echo no 
+     register: res
+
+   - name:
+     assert:
+       that: res.stdout == 'ok'
+       success_msg: "Utilisateur bob présent"
+       fail_msg: "Utilisateur bob absent"

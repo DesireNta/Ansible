@@ -1,0 +1,62 @@
+#
+Structure loop
+
+#
+2020-02-12
+
+#
+
+    name: Structure loop
+    hosts: node-1
+
+    vars:
+    stagiaires:
+        david
+        tonio
+
+        rom
+
+        series:
+        nom: House Of Cards
+        acteurs:
+            Kevin Spacey
+            Robin Wright
+            saison: 6
+        nom: Game Of Thrones
+        acteurs:
+            Emilia Clarke
+            Kit Harington
+            saison: 8
+
+    tasks:
+
+        name: Première boucle simple
+        debug:
+        msg: '{{ item }}'
+        loop:
+            bob
+            curt
+            loé
+
+        name: Boucle à partir d'une variable
+        debug:
+        msg: '{{ item }}'
+        loop: '{{ stagiaires }}'
+
+        name: Boucle selon une séquence
+        debug:
+        msg: '{{ item }}'
+        loop: '{{ range(0,10,2)|list }}'
+
+        name: Itération sur les lignes d'un fichier (stagiaires.txt)
+        debug:
+        msg: '{{ item }}'
+        loop: '{{ lookup("file","stagiaires.txt").splitlines() }}'
+
+        name: Itérations sur les valeurs du tableau inventory_hostnames
+        connection: local
+        debug:
+        msg: '{{ item }}'
+        loop: '{{ query("inventory_hostnames","
+
+
