@@ -1,0 +1,27 @@
+#
+# Les tags
+#
+# 2020-02-13
+#
+#
+#
+
+- name : Les tags 
+  hosts : centos-1
+  gather_facts: no
+
+  tasks: 
+  - name: Tâche 1
+    debug: 
+      msg: "Tâche 1"
+    tags: t1
+
+  - name: Tâche 2
+    debug:
+      msg: "Tâche 2"
+    tags: tag2
+
+  - name: Tâche 3
+    debug: 
+      msg: "Tâche 3"
+    tags : [t1,install]

@@ -1,0 +1,16 @@
+- Commentaire :
+ {# Commentaire #}
+
+- Structure conditionnelle 
+
+ {% if ansible_distribution == 'Debian' %}
+ Distribution Debian
+ {% else %}
+ Autre distribution
+ {% endif %}
+
+- Structure itérative 
+
+{% for  item in users %}
+{{ item.login}}
+{% endfor %}

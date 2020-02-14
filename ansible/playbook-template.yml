@@ -1,0 +1,39 @@
+#
+# Les templates
+#
+# 2020-02-13
+#
+#
+
+- name: Les templates
+  hosts: all
+
+  vars:
+    users:
+     - login: bob
+       shell: /bin/bash
+       groups:
+         - admin
+         - info
+       password: secret
+ 
+     - login: curt
+       shell: /bin/bash
+       groups:
+         - admin
+         - sport
+       password: secret
+
+
+
+  tasks: 
+  - name: Installation du template test.html.j2
+    template : 
+      src: test.html.j2
+      dest: '{{repertoire}}'
+   tags: never
+
+  - name : Créer un ficher 
+    template: 
+      src: jinja2.txt.j2 
+      dest : /tmp/ficher.txt
