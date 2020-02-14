@@ -1,0 +1,7 @@
+
+
+- name: Utilisation d'un rôle 
+  hosts: all
+
+  roles:
+    - role: Apache

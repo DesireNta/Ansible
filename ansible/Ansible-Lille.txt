@@ -1,0 +1,812 @@
+Formation Ansible Lille (10-14 février 2020)
+
+Damien      OK
+Désiré      OK
+Guillaume   OK
+Amri        OK
+Abdalla     OK
+Cédric      OK
+Mohamed     OK
+
+Estéban     OK
+Olivier     OK
+
+Bruno (formateur)
+
+Emulateur de terminaux : MobaXterm, NRemoteNG
+
+==========================================================================
+Configuration technique
+-----------------------
+
+Ansible -> Linux
+Système maître : Linux
+Cibles : Linux/Windows
+
+Olivier/Estéban : Poste Windows -> Virtualbox : VM Linux
+
+Maître : Ubuntu/Debian/CentOS(?)
+Cibles : Centos/(Debian ou Ubuntu)
+Prérequis :
+- Interface graphique non nécessaire
+- Service OpenSSH
+- sudo
+
+Maître : 192.168.31.112
+4 Cibles :
+- 2 CentOS (/etc/sysconfig/network-scripts/ifcfg-*)
+    - node-1 : 192.168.31.122
+    - node-2 : 192.168.31.145
+- 2 Debian :
+    - node-3 : 192.168.31.138
+    - node-4 : 192.168.31.97
+
+Outils de gestion et de maintenance de la configuration/état des systèmes
+-------------------------------------------------------------------------
+
+Puppet/Chef/CfEngine/...
+-> Présence d'un agent sur les postes cibles
+
+Ansible
+-> pas de nécessité d'un agent sur les cibles
+-> ssh/python (Linux)
+
+Ecrit en Python, extrêmement modulaire, extensible
+
+Configuration SSH des postes cibles (Windows : Putty/MobaXTerm/NRemoteNG/...)
+-----------------------------------
+CentOS : connexion SSH en root, par défaut est possible
+Debian : Connexion SSH en root, par défaut impossible
+
+1. création d'un utilisateur : stagiaire/vagrant
+
+    useradd -m -s /bin/bash stagiaire
+    passwd stagiaire
+
+2. présence de sudo
+
+    which sudo
+
+    Si besoin, l'installer :
+       yum install sudo (Redhat/CentOS)
+       apt install sudo (Debian/Ubuntu)
+
+3. ajout de stagiaire dans la configuration sudo
+
+    visudo
+    ajout de la ligne suivante en fin de fichier
+
+    stagiaire   ALL=(ALL) NOPASSWD: ALL
+
+4. test de la modification en tant que stagiaire
+
+   sudo whoami -> root
+
+5. Permettre, depuis le maître, la connexion SSH en tant que stagiaire sans fournir de mot de passe -> paire de clés privée/publique
+
+    - sur le maître, on génère une paire de clés (à partir du compte stagiaire)
+
+        ssh-keygen -t rsa
+
+    - envoyer la clé publique sur le compte stagiaire/vagrant de chaque poste cible
+
+        for ip in 122 145 138 97
+        do
+          ssh-copy-id  vagrant@192.168.31.$ip
+        done
+
+    (Configuration SSH : /etc/ssh/sshd_config -> PasswordAuthentication yes -> systemctl restart ssh)
+
+Installation d'Ansible
+----------------------
+
+Ursula Le Guin -> Ansible: moyen pour se déplacer partout dans l'univers et instantanément.
+
+Ansible est un outils pour faire la même chose sur plusieurs machines à la fois :
+- installation
+- configuration
+- action...
+
+-> écriture de fichiers appelés "playbook" s'apparentant à la notion de scénario.
+Un playbook décrit finalement l'état d'un ensemble de machine -> IAAS : Infrastructure As A Code
+L'idée est de maintenir et de faire évoluer un playbook et de le rejouer, plutôt que d'agir directement sur chaque poste cible.
+On maintient l'état d'une infrastructure par le biais d'un playbook et ses éventuelles différentes versions.
+
+Ansible et Vagrant :
+- Vagrant : Création de machines virtuelles sur l'hôte physique local
+- Ansible : provisioning -> installation/configuration
+
+Généralement on éxécute Vagrant pour créer les VM, puis Ansible pour les provisionner -> mais c'est forcément en local
+Mais à l'aide d'un playbook (Ansible), on peut installer Virtualbox et vagrant sur une machine distante, puis provisionner à distance les VMs créées.
+
+Ansible est un outils de provisioning du moment que SSH/Python sont là.
+
+On installe Ansible par la commande suivante :
+
+pip install ansible
+
+(si besoin, installer pip par la commande 'apt install python-pip')
+
+Découverte d'Ansible
+--------------------
+
+0. Préparation SSH si clé privée protégée par une passphrase (à faire à chaque session)
+
+    eval $(ssh-agent)
+    ssh-add [chemin vers la clé privée]
+
+1. Version d'Ansible
+
+    ansible --version
+
+2. Configuration initiale
+
+    Fichier ansible.cfg (format INI)
+
+    [defaults]
+    inventory           = inventory
+    private_key_file    = /home/ollo/ansible
+
+3. Fichier d'inventaire : liste des postes cibles
+
+    Dans le fichier inventory/hosts :
+
+Adresses IP de chaque node:
+- dans la vraie vie, chaque node a un nom DNS, ou figure dans le fichier /etc/hosts
+- indiquée par la variable d'inventaire ansible_host
+
+Première commande ansible : liste des postes cibles
+
+ansible-inventory --list hosts
+
+4. Test d'accès aux nodes : module ping d'ansible
+
+5. Notion de modules
+
+Notion centrale pour Ansible : un module effectuant une action bien précise
+Liste des modules disponibles sur l'installation :
+
+ansible-doc -l
+
+Documentation d'un module
+
+ansible-doc nom_du_module
+
+Commandes ad-hoc
+================
+
+Commande exécutant un module avec toutes les informations sur la ligne de commande :
+
+ansible -m ping ...
+
+Module shell : permettant d'exécuter une commande à distance (nécessite python)
+Module raw   : permettant d'exécuter une commande à distance (sans utiliser python)
+
+TP: Installation de Samba (partage de fichiers au sens windows) sur le node-1
+
+ansible -m shell -a "yum install -y samba"
+
+Notion d'idempotence : une action est idempotente si elle conduit toujours au même résultat à chaque exécution.
+Le module n'est pas module idempotent !
+Dans le cas de cet exemple (installation d'un paquet), on devrait utiliser le module yum :
+ansible -m yum -a "name=samba state=present" -b --become-user root node-1
+
+Atelier : sur le node sur lequel samba a été installé
+
+- création du groupe "commun"
+- création du répertoire "/partage"
+- Affecter le groupe "commun" au répertoire "/partage"
+- Positionner les droits 3777 sur le répertoire "/partage"
+- Vérifier l'état du répertoire à l'aide la commande "ls -ld /partage"
+
+0777 : tous les droits
+3777
+|
++- 2: SetGID
+   1: Sticky Bit
+
+- Utiliser le module "file" afin de créer, de manière idempotente, le répertoire /partage (ansible-doc file)
+  Vérifier l'idempotence en exécutant la commande plusieurs fois de suite en s'assurant de l'absence d'erreur.
+
+Atelier : installation du paquet httpd sur les machines du groupe CentOS (module yum)
+
+          ansible -m yum -a "name=httpd state=present" -b centos
+
+Console Ansible : ansible-console
+
+Exemple :
+    ansible-console centos -b
+    -> service name=httpd state=started enabled=true
+
+Module uri : permet l'interrogation d'un serveur Web
+
+ansible -m uri -a "url=http://localhost" node-1 -b
+
+Module file : permet la copie d'un fichier (situé par défaut dans le répertoire 'files') sur des postes cibles
+
+ansible -m file -a "src=index.html dest=/var/www/html/index.html" node-1 -b
+
+Les Playbooks Ansible
+=====================
+
+Définition d'un playbook :
+
+Un scénario -> liste de tâches organisées en actes
+Dans un scénario, il y a plusieurs actes (au moins 1), chaque acte est composé de tâches.
+
+Un playbook est au format YAML.
+
+Premier playbook : ping vers les machines cibles (ansible -m ping all)
+
+# Playbook n°1 : ping vers les cibles
+- name: Premier acte -> 1 seule tâche
+  hosts: all
+  gather_facts: false
+
+  tasks:
+
+  - name: Appel au module ping
+    ping:
+
+
+Les playbooks sont traités par la commande 'ansible-playbook'.
+
+- Vérification de la syntaxe : ansible-playbook nom_du_playbook --syntax-check
+- Liste des tâches d'un playbook : ansible-playbook nom_du_playbook --list-tasks
+- Exécution du playbook : ansible-playbook nom_du_playbook
+
+Atelier : Playbook réalisant les tâches suivantes sur les cibles 'centos'
+
+- installation du paquet 'httpd'
+- configuration du service : enabled et started
+- copie du fichier index.html
+
+Playbook conmportant 1 acte de 3 tâches :
+- écrire le playbook
+- vérifier la syntaxe
+- lister les tâches
+- exécuter le playbook
+
+Activation du paramètre retry_files_enabled = true (par défaut jusqu'à la version 2.7, false à partir de 2.8)
+
+En cas d'erreur sur un ou plusieurs hosts, il y a génération d'un fichier nom_du_playbook.retry contenant la liste de hôtes en échec.
+La réexécution du playbook pour ces seuls hôtes se fait par :
+
+ansible-playbook nom_du_playbook -l @fichier_retry
+
+Pour que les fichiers retry soient créés dans un répertoire dédié, créer ce dernier et ajouter la ligne suivante dans ansible.cfg :
+
+retry_files_save_path = répertoire
+
+Objectif : permettre à toutes cibles de résoudre le maître par son nom 'ansible'
+Solution : ajouter une résolution dans le fichier /etc/hosts de chaque cible
+Module   : lineinfile
+
+#
+# Ajout d'une résolution dans le fichier /etc/hosts
+#
+# 2020-02-11
+#
+- name: Ajout d'une résolution dans /etc/hosts
+  hosts: all
+  gather_facts: false
+  become: yes
+  become_user: root
+
+  tasks:
+
+  - name: module lineinfile
+    lineinfile:
+      path: /etc/hosts
+      line: 172.16.0.103 ansible
+
+Atelier : modification du port d'écoute du service httpd sur les centos
+Port actuel : 80
+Port modifié: 8080
+Fichier à modifier : /etc/httpd/conf/httpd.conf -> Listen 80
+NB: penser à redémarrer le service
+
+Vérification avant : ss -tln
+Exécution du playbook
+Vérification après : ss -tln
+
+#
+# Modification du port d'écoute du service httpd
+#
+# 2020-02-11
+#
+
+- name: Modification du port d'écoute du service httpd
+  hosts: centos
+  gather_facts: false
+  become: yes
+  become_user: root
+
+  tasks:
+  - name: Modification du fichier /etc/httpd/conf/httpd.conf
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: Listen 80$
+      line: Listen 8080
+
+  - name: Redémarrage du service httpd
+    systemd:
+      name: httpd
+      state: restarted
+
+Le problème de ce playbook est le redémarrage systèmatique du service httpd, même si pas de modification de la conf.
+Solution : utilisation de handlers.
+
+Les handlers
+
+Un handler est une tâche dont l'exécution est explicitement appelée depuis une autre tâche, lorsque celle-ci doit être exécutée.
+
+
+Les variables
+
+Types de variables
+- variables de playbook -> variables d'actes
+  L'emportent sur les variables d'inventaires
+
+- variables d'inventaire -> définies dans les fichiers d'inventaires (ex: ansible_host)
+   - Variables de nodes : définies au niveau de chaque host dans l'inventaire ou dans un fichier du répertoire host_vars
+   - Variables de groupes : définies au niveau de la section [nom_du_group:vars] de l'inventaire ou dans un fichier du répertoire group_vars
+
+- extra-variables : définies lors de l'appel à l'aide de l'option -e "nom=contenu" ou -e @vars.yml
+
+- variables "magiques" ou automatiques : variables créées et automatiquement maintenues par ansible
+
+  inventory_dir
+  playbook_dir
+  inventory_hostname
+  groups
+  ...
+
+Atelier : adapter les playbooks playbook-httpd et playbook-httpd-port à tous les nodes -> prendre en compte les spécificités des distributions
+
+            Centos                          Debian
+Service:     httpd                          apache2
+Paquet:      httpd                          apache2
+User:        apache                         www-data
+Group:       apache                         www-data
+Port:        /etc/httpd/conf/httpd.conf     /etc/apache2/ports.conf
+Répertoire:  /var/www/html                  /var/www/html
+
+
+Atelier : Modifier le hostname de chaque node en fonction du nom d'inventaire (module hostname)
+commande:   yum                             apt
+Module      package                         package
+
+Les faits
+=========
+
+Les faits (facts) sont un ensemble de variables issues de l'environnement de chaque node.
+Le module 'setup' est responsable de la collecte des faits.
+
+Atelier:
+Sur chaque node (serveur web installé), remplacer le fichier index.html par défaut par un fichier au formation suivant
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Nom_du_node</title>
+        <meta charset="utf-8">
+    </head>
+    <body>
+    Python sur le node Nom_du_node:<br>
+    Exécutable: chemin_vers_l'exécutable_python<br>
+    Version : X_Y_Z
+    </body>
+</html>
+
+Notion de connexion
+===================
+
+Permet l'exécution d'une tâche sur un node spécifique, au lieu de l'exécuter sur les nodes indiqués par le paramètre 'hosts'.
+Attention aux paramètres 'become*'.
+
+Atelier : Sur chaque node, ajouter dans le fichier /etc/hosts, la résolution de tous les nodes, de manière à avoir les lignes suivantes
+          IP node-1
+          IP node-2
+          ...
+
+Structures de contrôles : tests et boucles
+==========================================
+
+Module register
+---------------
+Permet d'enregistrer le résultat d'une tâche dans une variable.
+
+Ex de playbook
+
+#
+# Module register
+#
+# 2020-02-12
+
+- name: Module register
+  hosts: node-1
+
+  tasks:
+  - name: Tâche quelconque
+    ping:
+    register: result
+
+  - name: Affichage de la variable 'result'
+    debug:
+      msg: "Variable 'result': {{ result }}"
+
+Structures conditionnelles
+--------------------------
+
+Structure when
+--------------
+Permet de décider de l'exécution conditionnelle d'une tâche
+
+#
+# Structure when
+#
+# 2020-02-12
+#
+- name: Structure When
+  hosts: all
+
+  tasks:
+  - name: Lister les hôtes lorsque la distribution est une Debian
+    debug:
+      msg: "{{ inventory_hostname }}({{ ansible_distribution }})"
+    when: ansible_distribution in ['Debian']
+
+Structure block/when
+--------------------
+Sorte de méta-tâche permettant de mutualiser une condition when :
+
+#
+# Structure block ... when
+#
+# 2020-02-12
+#
+- name: Structure Block ... When
+  hosts: all
+
+  tasks:
+  - name: Meta-tâche block when
+    block:
+    - name: Lister les hôtes lorsque la distribution est une Debian
+      debug:
+        msg: "{{ inventory_hostname }}({{ ansible_distribution }})"
+      register: log
+
+    - name: Afficher du status de la tâche précédente
+      debug:
+        msg: '{{ log.failed }}'
+    when: ansible_distribution in ['Debian']
+
+Module assert
+-------------
+
+Permet la vérification de pré-requis, vérifie une ou plusieurs conditions et, selon les cas, affiche un message de réussite, ou d'erreur.
+En cas de réussite, le message success_msg est affiché et l'exécution de l'acte se poursuit
+En cas d'erreur, le message fail_msg est affiché et l'exécution de l'acte est stoppée.
+
+#
+# Module assert
+#
+# 2020-02-12
+#
+
+- name: Module assert
+  hosts: all
+
+  tasks:
+
+  - name: Vérification de la distribution CentOS/RedHat et de l'architecture x86_64
+    assert:
+      that:
+        - ansible_distribution in ['CentOS','RedHat']
+        - ansible_architecture == 'x86_64'
+      fail_msg: Distribution/architecture non supportée
+      success_msg: Tout est OK
+      quiet: yes
+
+  - name: Tâche de vérification de la réussite du module assert
+    debug:
+      msg: "Glop glop !"
+
+Module fail
+-----------
+
+L'inverse du module assert (syntaxe légérèment différente)
+
+#
+# Module fail
+#
+# 2020-02-12
+#
+
+- name: Module assert
+  hosts: all
+
+  tasks:
+
+  - name: Arrêt de l'acte si la distribution est CentOS ou RedHat
+    fail:
+      msg: Distribution/architecture non supportée
+    when: ansible_distribution in ['CentOS','RedHat']
+
+  - name: Tâche de vérification de la réussite du module assert
+    debug:
+      msg: "Glop glop !"
+
+
+Atelier: tester l'existence de l'utilisateur bob sur chaque node et afficher un message en conséquence...
+
+#
+# Atelier: structure conditionnelle
+#
+# 2020-02-12
+#
+
+- name: Atelier sur les structures conditionnelles
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Existence du compte 'bob'
+      shell: grep -q ^bob /etc/passwd && echo ok || echo ko
+      register: status
+
+    - name: Affichage de la variable 'status'
+      assert:
+        that: status.stdout == 'ok'
+        success_msg: 'Utilisateur bob présent'
+        fail_msg: 'Utilisateur bob absent'
+
+Structures itératives
+---------------------
+
+Depuis Ansible 2.4, simplification des boucles à l'aide de la structure loop (en remplacement des boucles with_*)
+
+Atelier : Création de groupes et de comptes
+
+On donne la variable users suivantes:
+
+    vars:
+        users:
+            - login: bob
+              shell: /bin/bash
+              groups:
+                - admin
+                - info
+              password: secret
+            - login: curt
+              shell: /bin/bash
+              groups:
+                - admin
+                - sport
+              password: secret
+
+Consigne finale : Créer les comptes utilisateurs avec les informations de la variable users -> cela implique, au préalable, de créer tous les groupes nécessaires.
+
+Consignes préparatoires :
+- Lister le nom des utilisateurs
+- Lister le nom des groupes
+
+Modules utiles
+- user
+- group
+
+Exemple du C/C++
+----------------
+
+for(i=0;i<10;i++)       --> item.0
+    for(j=0;j<10;j++)   --> item.1
+        for(k=0;k<5;k++)--> item.2
+
+Les tags
+========
+
+Un tag est une étiquette attribuable à :
+- un acte
+- une tâche
+- un block
+...
+
+Templating
+==========
+
+Template -> modèle de fichier
+Jinja2   -> moteur de template
+module template : mise en oeuvre de Jinja2
+
+Template : fichier stocké dans le répertoire template/ avec l'extension .j2
+
+Atelier : templatiser le playbook playbook-python-info.yml en ajoutant les informations sur les adresses IP
+
+
+Escalade des privilèges:
+
+Maître(ansible)         Node
+ollo                    ansible   sudo   bob
+        remote_user          become_user
+
+
+Informations sur les interfaces:
+
+1. ansible_interfaces = [ "lo", "enp0s3", "enp0s8"]
+2. ansible_{{ ansible_interfaces[1] }} -> macaddress, ipv4.address
+
+Filtrer, éventuellement sur le type d'interface (NAT, Bridge).
+
+Inventaire dynamique
+--------------------
+
+Jusqu'à présent, l'inventaire était statiquement défini dans le fichier inventory/hosts.
+Il y a possibilité de gérer dynamiquement un inventaire...
+
+Protection des données sensibles
+================================
+
+Deux techniques :
+- chiffrement d'un fichier
+- chiffrement d'un champ
+
+Chiffrement un fichier
+----------------------
+Un fichier peut être chiffré à l'aide d'un mot de passe (clé partagée) ou d'une paire de clés publique/privée.
+
+Fichier en clair:
+bob: secret
+curt: secret
+
+Chiffrement à l'aide de clé privée
+
+ansible-vault encrypt password-crypt.yml --vault-id=~/.ssh/id_rsa
+
+Chiffrement d'un champ
+----------------------
+
+ansible-vault encrypt_string 'secret'
+!vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          38356536326261303339343837323934303462313634303432623436663137303065333036656630
+          6231653635316565343239386462653931643666316632340a343465663235646438636335306330
+          37613333343531316634343461663965643032643262626139353261343261353961653663333537
+          6537653533643764310a633935633538396265613638333530303764376634306431633236633638
+          3039
+Encryption successful
+
+Création d'un playbook avec un champ chiffré :
+
+#
+# Chiffrement d'un champ
+#
+# 2020-02-13
+#
+- name: Chiffrement d'un champ
+  hosts: node-1
+  gather_facts: no
+
+  vars:
+    password: !vault |
+              $ANSIBLE_VAULT;1.1;AES256
+              38356536326261303339343837323934303462313634303432623436663137303065333036656630
+              6231653635316565343239386462653931643666316632340a343465663235646438636335306330
+              37613333343531316634343461663965643032643262626139353261343261353961653663333537
+              6537653533643764310a633935633538396265613638333530303764376634306431633236633638
+              3039
+
+  tasks:
+  - name: Affichage de la variable 'password'
+    debug:
+      msg: '{{password}}'
+
+Atelier : Reprendre le playbook de création de comptes/groupes en chiffrant les champs de mots de passe (en utilisant d'autres comptes)
+
+Atelier : Idem, mais en délocalisant les mots de passe dans fichier chiffré (en utilisant d'autres comptes afin qu'il y ait création)
+
+Gestion avancée des facts
+=========================
+Mise en cache - Exemple de redis
+-------------
+
+1. Installation d'un serveur redis et de la lib redis pour python
+
+apt install redis-server python-redis
+                      ou python3-redis
+
+2. Configuration ansible pour mettre les facts en cache redis
+
+gathering               = smart
+fact_caching            = redis
+fact_caching_timeout    = 86400
+fact_caching_connection = localhost:6379:0
+
+3. Vérification
+D'un appel à l'autre, il n'y a plus de collecte de faits, sauf expiration du timeout ou suppression de la clé associée à un noeud
+
+Faits personnalisés
+-------------------
+
+Création d'un fait personnalisé
+
+#
+# Création d'un fait personnalisé
+#
+# 2020-02-13
+#
+- name: Fait personnalisé en cache
+  hosts: node-1
+
+  tasks:
+  - name: Création du fait 'test'
+    set_fact:
+      test: coucou
+      cacheable: true
+
+Utilisation d'un fait personnalisé
+
+#
+# Utilisation d'un fait personnalisé
+#
+# 2020-02-13
+#
+- name: Fait personnalisé en cache
+  hosts: node-1
+
+  tasks:
+  - name: Utilisation du fait 'test'
+    debug:
+      msg: '{{ test }}'
+
+
+Notion de rôles
+===============
+
+Jusqu'à présent, la partie active d'un playbook est la notion de tâche.
+On peut tout à fait mutualiser des tâches à l'aide du mécanisme 'import_tasks'. Mais 'import_tasks' ne fait qu'importer
+des tâches dans un playbook. Il faut, par ailleurs, initialiser les variables nécessaires. Il n'a pas de notion de contexte...
+
+La notion de rôle va plus en définissant tout un contexte lié au rôle et non au playbook.
+Contexte d'un rôle -> arborescence située dans le répertoire 'roles'.
+
+Le contexte d'un rôle est créé à l'aide de la commande ansible-galaxy init ...
+
+Priorité des variables (décroissante)
+vars/main.yml
+group_vars/*
+host_vars/*
+defaults/main.yml
+
+Atelier : a partir du travail déjà fait sur Apache, créer un rôle Apache pour réaliser :
+            - l'installation
+            - la activation (passage par handlers)
+            - la configuration du port (variable)
+            - la page d'accueil
+Dans defaults/main.yml
+-> nom des paquets
+-> nom des services
+-> port par défaut
+-> user apache
+-> groupe apache
+
+NB: ajouter une tâche de désactivation du firewall pour les distributions de type CentOS/RedHat (service firewalld)
+
+MySQL : SGBD open source (Propriété d'Oracle...)
+MariaDB -> dérivé de MySQL
+
+N'existerait-il pas un rôle disponible sur Internet ?
+Visite du site galaxy.ansible.com à la recherche d'un rôle
+
+Atelier: Installation et utilisation d'un rôle de galaxy
+
+Consignes :
+- installation du rôle geerlingguy.mysql
+
+    ansible-galaxy install geerlingguy.mysql -p chemin du répertoire 'roles/'
+
+- création d'un playbook réalisant les actions suivantes:
+    - installation de mysql/mariadb
+    - création des deux bases db1 et db2
+    - création d'un compte dba@'%' ayant tous les privilèges sur les deux bases db1 et db2
+
+Pour répondre aux consignes, consulter la documentation du rôles -> tout ce fait à l'aide de variables.

@@ -1,0 +1,10 @@
+---
+# defaults file for Apache
+#
+# service: httpd
+# paquet: httpd
+# path_conf_port: /etc/httpd/conf/httpd.conf
+ repertoire: /var/www/html/index.html
+ user: apache
+ group: apache
+ port_number: 80

@@ -1,0 +1,6 @@
+---
+# tasks file for role_1
+#
+ - name : Utilisation d'un rôle 
+   debug: 
+     msg : appelle du role 1

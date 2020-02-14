@@ -1,0 +1,12 @@
+#
+# Utilisation du rôle geerlingguy.myslq
+#
+# 2020-02-14
+#
+
+- name: Installation de mariadb
+  hosts : centos-1
+
+  roles: 
+    - role : geerlingguy.mysql
+

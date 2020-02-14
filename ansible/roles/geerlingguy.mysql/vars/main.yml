@@ -1,0 +1,15 @@
+  database: ['db7', 'db8']
+
+  mysql_databases:
+  - name: bd5         
+    collation: utf8_general_ci
+    encoding: utf8
+    replicate: 1
+
+
+  mysql_users:
+  - name: autre_user 
+    host: "%"
+    password: DBA_password
+    priv: "db1.*,db2.*:ALL"
+

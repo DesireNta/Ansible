@@ -1,0 +1,7 @@
+
+
+- name: Utilisation d'un rôle 
+  hosts: centos-1
+
+  roles:
+    - role: role_1

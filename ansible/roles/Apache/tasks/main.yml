@@ -1,0 +1,27 @@
+---
+# tasks file for Apache
+#
+  
+ # - name: Importationd de variables 
+ #   import_tasks : variables.yml
+
+
+  - name: installer les serveurs web
+    package:
+      name: '{{paquet}}'
+      state: present
+    notify: restart_services
+
+  - name: Configuration du port
+    lineinfile:
+      path: '{{path_conf_port}}'
+      regexp: ^Listen 
+      line: Listen '{{port_number}}'
+    notify: restart_services
+
+  - name: Installation du template test.html.j2
+    template :
+      src: test.html.j2
+      dest: '{{repertoire}}'
+    notify: restart_services
+
